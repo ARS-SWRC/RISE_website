@@ -1,2 +1,5 @@
 # Ignore history files
 history/
+
+# Deploy notes
+NOTES.md
