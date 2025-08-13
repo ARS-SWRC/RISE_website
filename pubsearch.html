@@ -76,8 +76,8 @@
             <div class="md:flex" style="display:flex; width100%;">
                 <!-- Form Section -->
                 <div class="w-full md:w-1/3 bg-gray-50 p-6 md:p-8 border-r border-gray-200" style="flex:3">
-                    <h1 class="text-2xl font-bold text-gray-900">Airtable Search</h1>
-                    <p class="text-gray-600 mt-2 mb-6">Enter your credentials and search query to find records.</p>
+                    <h1 class="text-2xl font-bold text-gray-700">Publications/Poster Search</h1>
+                    <p class="text-gray-600 mt-2 mb-6">Select field to search for and search Term.</p>
                     
                     <form id="airtableForm" class="space-y-4">
                         <div>
@@ -89,18 +89,25 @@
                             <input type="text" id="baseId" class="form-input" style="display: none;" placeholder="app..." value="appxlgxQYdi9VR7lM">
                         </div>
                         <div>
-                            <label for="tableName" class="form-label">Table Name</label>
-                            <input type="text" id="tableName" class="form-input" placeholder="e.g., 'Contacts'" value="Publications">
+                            <label for="tableName" class="form-label" style="display: none;" >Table Name</label>
+                            <input type="text" id="tableName" class="form-input" style="display: none;"  placeholder="e.g., 'Contacts'" value="Publications">
                         </div>
                         <div>
-                            <label for="searchField" class="form-label">Field to Search</label>
-                            <input type="text" id="searchField" class="form-input" placeholder="e.g., 'Name'" value="Title">
+                                <label for="searchField" class="form-label">Field to Search</label>
+                                <select id="searchField" class="form-input">
+                                    <option value="Title" selected>Title</option>
+                                    <option value="Author (from Key)">Author</option>
+                                </select>
                         </div>
                         <div>
                             <label for="query" class="form-label">Search Term</label>
                             <input type="text" id="query" class="form-input" placeholder="e.g., 'John Doe'">
                         </div>
-                        <button type="submit" class="btn-primary">
+                        <div>
+                            <label for="queryAll" class="form-label">Show All</label>
+                            <input type="checkbox" id="queryAll" class="form-input">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width:230px;height:30px;margin-top:30px;">
                             <span id="button-text">Search</span>
                             <span id="button-spinner" class="hidden">
                                 <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -165,7 +172,13 @@
                 const formula = `SEARCH(LOWER("${query}"), LOWER({${searchField}}))`;
                 const encodedFormula = encodeURIComponent(formula);
                 
-                const url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}?filterByFormula=${encodedFormula}`;
+                url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}?filterByFormula=${encodedFormula}`;
+
+                if (document.getElementById('queryAll').checked){
+                    url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}`;
+                }
+
+                console.log(url);
 
                 // 5. Make the fetch call to Airtable API
                 const response = await fetch(url, {
@@ -215,16 +228,26 @@
                 const card = document.createElement('div');
                 card.className = 'result-card';
                 
-                let cardContent = `<h3 class="text-lg font-bold text-blue-700 mb-2">Record ID: ${record.id}</h3>`;
+                let cardContent = ''; // `<h4 class="text-lg font-bold text-blue-700 mb-2">Title: ${record.id}</h3>`;
                 
                 // Display all fields from the record
+                var i = 0;
                 for (const field in record.fields) {
-                    cardContent += `
-                        <div>
-                            <span class="result-field">${field}:</span>
-                            <span class="result-value">${JSON.stringify(record.fields[field])}</span>
-                        </div>
-                    `;
+                    if(i == 1)
+                        cardContent += `
+                            <div>
+                                <h5 class="result-field" style="font-weight:bold;">${field}:</span>
+                                <h5 class="result-value">${JSON.stringify(record.fields[field])}</span>
+                            </div>
+                        `;
+                    else if (i==1 || i==2 || i==3 || i==5)
+                        cardContent += `
+                            <div>
+                                <span class="result-field" style="font-weight:bold;">${field}:</span>
+                                <span class="result-value">${JSON.stringify(record.fields[field])}</span>
+                            </div>
+                        `;
+                    i++;
                 }
                 
                 card.innerHTML = cardContent;
@@ -235,13 +258,7 @@
     </div>
 </section>
 
-
 <section data-bs-version="5.1" class="footer4 cid-tL9r2e8jwo" once="footers" id="footer4-13">
-
-    
-
-    
-    
     <div class="container">
         <div class="row mbr-white">
             <div class="col-6 col-lg-3">
@@ -255,42 +272,35 @@
                 <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
                     <strong>RISE Organizing Committee:</strong></h5>
                 <p class="mbr-text mbr-fonts-style mb-4 display-4">Brett Blum, Phil Heilman, Mitch McClaran, Heather Throop (alphabetical)
-<br>
-<br><a href="mailto:bcb@arizona.edu" class="text-primary">bcb@arizona.edu</a>
-<br><a href="mailto:phil.heilman@usda.gov" class="text-primary">phil.heilman@usda.gov</a>
-<br><a href="mailto:mcclaran@u.arizona.edu" class="text-primary">mcclaran@u.arizona.edu</a>
-<br><a href="mailto:heather.throop@asu.edu" class="text-primary">heather.throop@asu.edu</a>&nbsp;<br></p>
-                
-                
+                <br>
+                <br><a href="mailto:bcb@arizona.edu" class="text-primary">bcb@arizona.edu</a>
+                <br><a href="mailto:phil.heilman@usda.gov" class="text-primary">phil.heilman@usda.gov</a>
+                <br><a href="mailto:mcclaran@u.arizona.edu" class="text-primary">mcclaran@u.arizona.edu</a>
+                <br><a href="mailto:heather.throop@asu.edu" class="text-primary">heather.throop@asu.edu</a>&nbsp;<br></p>
+                </div>
+                <div class="col-12 col-md-6 col-lg-6">
+                    <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
+                        <strong>Acronyms:</strong></h5>
+                    <ul class="list mbr-fonts-style display-4">
+                        <li class="mbr-text item-wrap">AES: Arizona Experiment Station
+                        <br>AIR: Arizona Institute for Resilience</li><li class="mbr-text item-wrap">ARS: Agricultural Research Service</li><li class="mbr-text item-wrap">NEON: National Ecological Observatory Network
+                        </li><li class="mbr-text item-wrap">SAES: Southern Arizona Experiment Station
+                        </li><li class="mbr-text item-wrap">SNRE: School of Natural Resources and the Environment<br>SRER: Santa Rita Experimental Range</li><li class="mbr-text item-wrap">SWRC: Southwest Watershed Research Center
+                        </li><li class="mbr-text item-wrap">UA: University of Arizona<br>UO BIO: Univ Oklahoma School Biological Sciences</li><li class="mbr-text item-wrap">
+                        </li><li class="mbr-text item-wrap">USDA: United States Department of Agriculture
+                        <br>USGS: United States Geological Survey</li><li class="mbr-text item-wrap"><br></li>
+                    </ul>
             </div>
-            <div class="col-12 col-md-6 col-lg-6">
-                <h5 class="mbr-section-subtitle mbr-fonts-style mb-2 display-7">
-                    <strong>Acronyms:</strong></h5>
-                <ul class="list mbr-fonts-style display-4">
-                    <li class="mbr-text item-wrap">AES: Arizona Experiment Station
-<br>AIR: Arizona Institute for Resilience</li><li class="mbr-text item-wrap">ARS: Agricultural Research Service</li><li class="mbr-text item-wrap">NEON: National Ecological Observatory Network
-</li><li class="mbr-text item-wrap">SAES: Southern Arizona Experiment Station
-</li><li class="mbr-text item-wrap">SNRE: School of Natural Resources and the Environment<br>SRER: Santa Rita Experimental Range</li><li class="mbr-text item-wrap">SWRC: Southwest Watershed Research Center
-</li><li class="mbr-text item-wrap">UA: University of Arizona<br>UO BIO: Univ Oklahoma School Biological Sciences</li><li class="mbr-text item-wrap">
-</li><li class="mbr-text item-wrap">USDA: United States Department of Agriculture
-<br>USGS: United States Geological Survey</li><li class="mbr-text item-wrap"><br></li>
-                </ul>
-            </div>
-            
-            
         </div>
     </div>
 </section>
 
-
 <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/smoothscroll/smooth-scroll.js"></script>
-  <script src="assets/ytplayer/index.js"></script>
-  <script src="assets/mbr-tabs/mbr-tabs.js"></script>
-  <script src="assets/dropdown/js/navbar-dropdown.js"></script>
-  <script src="assets/theme/js/script.js"></script>
-  
-  
+<script src="assets/smoothscroll/smooth-scroll.js"></script>
+<script src="assets/ytplayer/index.js"></script>
+<script src="assets/mbr-tabs/mbr-tabs.js"></script>
+<script src="assets/dropdown/js/navbar-dropdown.js"></script>
+<script src="assets/theme/js/script.js"></script>
   
 </body>
 </html>
