@@ -236,19 +236,20 @@
                     if(i == 1)
                         cardContent += `
                             <div>
-                                <h5 class="result-field" style="font-weight:bold;">${field}:</span>
-                                <h5 class="result-value">${JSON.stringify(record.fields[field])}</span>
+                                <h5 class="result-field" style="font-weight:bold;display:inline;">${field}:</span>
+                                <h5 class="result-value" style="display:inline;">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
-                    else if (i==1 || i==2 || i==3 || i==5)
+                    else if (i==1 || i==2 || i==3 || i==5 || i == 6)
                         cardContent += `
                             <div>
                                 <span class="result-field" style="font-weight:bold;">${field}:</span>
-                                <span class="result-value">${JSON.stringify(record.fields[field])}</span>
+                                <span class="result-value">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
                     i++;
                 }
+                cardContent += "<br/>";
                 
                 card.innerHTML = cardContent;
                 resultsContainer.appendChild(card);
