@@ -235,31 +235,32 @@
                 // Display all fields from the record
                 var i = 0;
                 for (const field in record.fields) {
-                    if(i == 1)
+                    console.log('i' + i + '   ' + field);
+                    if(field == "Title")
                         cardContent += `
                             <div>
                                 <h5 class="result-field" style="font-weight:bold;display:inline;">${field}:</span>
                                 <h5 class="result-value" style="display:inline;">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
-                    else if (i==3 || i==5 || i == 6)
+                    else if (field == "Poster" || field == "Authors" || field == "Year")
                         cardContent += `
                             <div>
                                 <span class="result-field" style="font-weight:bold;">${field}:</span>
                                 <span class="result-value">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
-                    else if (i == 7)
+                    else if (field == "PDF")
                         cardContent += `
-        <div>
-            <span class="result-field" style="font-weight:bold;">${field}:</span> 
-            <span class="result-value">
-                <a href="https://github.com/ARS-SWRC/RISE_website/blob/main/${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}?raw=true">
-                    ${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}
-                </a>
-            </span>
-        </div>
-    `;
+                            <div>
+                                <span class="result-field" style="font-weight:bold;">${field}:</span> 
+                                <span class="result-value">
+                                    <a href="https://github.com/ARS-SWRC/RISE_website/blob/main/${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}?raw=true">
+                                        ${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}
+                                    </a>
+                                </span>
+                            </div>
+                        `;
                     i++;
                 }
                 cardContent += "<br/>";
