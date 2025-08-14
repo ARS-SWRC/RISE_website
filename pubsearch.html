@@ -96,7 +96,7 @@
                                 <label for="searchField" class="form-label">Field to Search</label>
                                 <select id="searchField" class="form-input">
                                     <option value="Title" selected>Title</option>
-                                    <option value="Author (from Key)">Author</option>
+                                    <option value="Authors">Author</option>
                                 </select>
                         </div>
                         <div>
@@ -169,7 +169,9 @@
                 // We URL-encode the table name and the formula to handle spaces and special characters.
                 const encodedTableName = encodeURIComponent(tableName);
                 // This formula finds records where the search term appears anywhere in the specified field (case-insensitive).
-                const formula = `SEARCH(LOWER("${query}"), LOWER({${searchField}}))`;
+                const formula = searchField === "Authors"
+                ? `SEARCH(LOWER("${query}"), LOWER(ARRAYJOIN({${searchField}}, ", ")))`
+                : `SEARCH(LOWER("${query}"), LOWER({${searchField}}))`;
                 const encodedFormula = encodeURIComponent(formula);
                 
                 url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}?filterByFormula=${encodedFormula}`;
@@ -240,13 +242,24 @@
                                 <h5 class="result-value" style="display:inline;">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
-                    else if (i==1 || i==2 || i==3 || i==5 || i == 6)
+                    else if (i==3 || i==5 || i == 6)
                         cardContent += `
                             <div>
                                 <span class="result-field" style="font-weight:bold;">${field}:</span>
                                 <span class="result-value">${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}</span>
                             </div>
                         `;
+                    else if (i == 7)
+                        cardContent += `
+        <div>
+            <span class="result-field" style="font-weight:bold;">${field}:</span> 
+            <span class="result-value">
+                <a href="https://github.com/ARS-SWRC/RISE_website/blob/main/${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}?raw=true">
+                    ${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}
+                </a>
+            </span>
+        </div>
+    `;
                     i++;
                 }
                 cardContent += "<br/>";
