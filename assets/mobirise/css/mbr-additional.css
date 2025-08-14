@@ -680,7 +680,7 @@ a {
 .cid-tFSAegxKxF {
   padding-top: 6rem;
   padding-bottom: 6rem;
-  background-image: url("../../../assets/images/srer-taylor-soils2-1728x2340.jpeg");
+  background-image: url("../../../assets/images/santa_ritas_view.png");
 }
 .cid-tFSAegxKxF .mbr-fallback-image.disabled {
   display: none;
@@ -700,7 +700,7 @@ a {
   margin-bottom: 2rem;
 }
 .cid-tFSAegxKxF .icon-box {
-  background: #6592e6;
+  background: #524322;
   width: 60px;
   min-width: 60px;
   height: 60px;
@@ -13225,4 +13225,16 @@ a {
 }
 .cid-ufYy0DvaBG .body-item {
   text-align: left;
+}
+
+
+.col-md-12 ol li{
+    font-family: 'Jost', sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.5;
+}
+.col-md-12 ul li{
+    font-family: 'Jost', sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.5;
 }
