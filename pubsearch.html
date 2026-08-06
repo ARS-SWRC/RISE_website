@@ -102,19 +102,14 @@
                             <label for="query" class="form-label">Search Term</label>
                             <input type="text" id="query" class="form-input" placeholder="e.g., 'John Doe'">
                         </div>
-                        <div>
-                            <label for="queryAll" class="form-label">Show All</label>
-                            <input type="checkbox" id="queryAll" class="form-input">
-                        </div>
                         <button type="submit" class="btn-primary" style="width:230px;height:30px;margin-top:30px;">
                             <span id="button-text">Search</span>
-                            <span id="button-spinner" class="hidden">
-                                <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </span>
                         </button>
+                        <div style="margin-top:20px;margin-left: 40px;">
+                            <a href="#" id="showAllButton" class="text-primary" style="text-decoration:underline;">
+                                <span id="show-all-button-text">Show All Publications</span>
+                            </a>
+                        </div>
                     </form>
                 </div>
 
@@ -125,6 +120,9 @@
                     <div id="results" class="mt-4 max-h-[60vh] overflow-y-auto pr-2">
                         <!-- Search results will be injected here -->
                     </div>
+                    <div id="pagination" class="mt-4" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                        <!-- Pagination links will be injected here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -133,13 +131,22 @@
     <script>
         const form = document.getElementById('airtableForm');
         const resultsContainer = document.getElementById('results');
+        const paginationContainer = document.getElementById('pagination');
         const statusContainer = document.getElementById('status');
-        const buttonText = document.getElementById('button-text');
-        const buttonSpinner = document.getElementById('button-spinner');
+        const searchButton = form.querySelector('button[type="submit"]');
+        const showAllButton = document.getElementById('showAllButton');
 
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
+        const PAGE_SIZE = 50;
+        let allRecords = [];
+        let currentPage = 1;
+        let groupByYear = false;
+
+        function getYear(record) {
+            const year = record.fields && record.fields.Year;
+            return parseInt(year, 10) || 0;
+        }
+
+        async function runSearch(showAll) {
             // 1. Get user input
             const apiKey = document.getElementById('apiKey').value.trim();
             const baseId = document.getElementById('baseId').value.trim();
@@ -148,7 +155,7 @@
             const query = document.getElementById('query').value.trim();
 
             // 2. Basic validation
-            if (!apiKey || !baseId || !tableName || !searchField || !query) {
+            if (!apiKey || !baseId || !tableName || (!showAll && (!searchField || !query))) {
                 statusContainer.textContent = 'Error: Please fill in all fields.';
                 statusContainer.className = 'mt-4 text-red-600 font-semibold';
                 resultsContainer.innerHTML = '';
@@ -157,56 +164,75 @@
 
             // 3. Show loading state
             resultsContainer.innerHTML = '';
+            paginationContainer.innerHTML = '';
             statusContainer.textContent = 'Searching...';
             statusContainer.className = 'mt-4 text-blue-600 font-semibold';
-            buttonText.classList.add('hidden');
-            buttonSpinner.classList.remove('hidden');
-            form.querySelector('button').disabled = true;
+            searchButton.disabled = true;
+            setShowAllDisabled(true);
 
             try {
                 // 4. Construct the API request
                 // We URL-encode the table name and the formula to handle spaces and special characters.
                 const encodedTableName = encodeURIComponent(tableName);
-                // This formula finds records where the search term appears anywhere in the specified field (case-insensitive).
-                const formula = searchField === "Authors"
-                ? `SEARCH(LOWER("${query}"), LOWER(ARRAYJOIN({${searchField}}, ", ")))`
-                : `SEARCH(LOWER("${query}"), LOWER({${searchField}}))`;
-                const encodedFormula = encodeURIComponent(formula);
-                
-                url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}?filterByFormula=${encodedFormula}`;
+                let baseUrl = `https://api.airtable.com/v0/${baseId}/${encodedTableName}`;
+                const params = [];
 
-                if (document.getElementById('queryAll').checked){
-                    url = `https://api.airtable.com/v0/${baseId}/${encodedTableName}`;
+                if (!showAll) {
+                    // This formula finds records where the search term appears anywhere in the specified field (case-insensitive).
+                    const formula = searchField === "Authors"
+                    ? `SEARCH(LOWER("${query}"), LOWER(ARRAYJOIN({${searchField}}, ", ")))`
+                    : `SEARCH(LOWER("${query}"), LOWER({${searchField}}))`;
+                    params.push(`filterByFormula=${encodeURIComponent(formula)}`);
                 }
 
-                console.log(url);
+                // 5. Fetch every page from Airtable (100 records max per request) so we
+                // have the complete result set to paginate through client-side.
+                let records = [];
+                let offset;
+                do {
+                    const pageParams = [...params];
+                    if (offset) pageParams.push(`offset=${encodeURIComponent(offset)}`);
+                    const url = pageParams.length ? `${baseUrl}?${pageParams.join('&')}` : baseUrl;
+                    console.log(url);
 
-                // 5. Make the fetch call to Airtable API
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
+
+                    // Specifically check for 404 error, which is common with wrong Base ID or Table Name.
+                    if (response.status === 404) {
+                        throw new Error("Not Found (404). Please double-check your Base ID and Table Name. They are case-sensitive.");
                     }
-                });
 
-                // 6. Handle the response
-                // Specifically check for 404 error, which is common with wrong Base ID or Table Name.
-                if (response.status === 404) {
-                    throw new Error("Not Found (404). Please double-check your Base ID and Table Name. They are case-sensitive.");
-                }
+                    const data = await response.json();
 
-                const data = await response.json();
+                    if (!response.ok) {
+                        // Airtable provides helpful error messages in the response body
+                        const errorMessage = data.error?.message || `HTTP Error: ${response.status} - ${response.statusText}`;
+                        throw new Error(errorMessage);
+                    }
 
-                if (!response.ok) {
-                    // Airtable provides helpful error messages in the response body
-                    const errorMessage = data.error?.message || `HTTP Error: ${response.status} - ${response.statusText}`;
-                    throw new Error(errorMessage);
-                }
+                    if (data.records) records = records.concat(data.records);
+                    offset = data.offset;
+                    if (offset) {
+                        statusContainer.textContent = `Loading records... (${records.length} so far)`;
+                    }
+                } while (offset);
 
-                if (data.records && data.records.length > 0) {
-                    statusContainer.textContent = `Found ${data.records.length} record(s).`;
-                    statusContainer.className = 'mt-4 text-green-600 font-semibold';
-                    renderResults(data.records);
+                if (records.length > 0) {
+                    groupByYear = showAll;
+                    if (showAll) {
+                        records.sort((a, b) => getYear(b) - getYear(a));
+                    }
+                    allRecords = records;
+                    currentPage = 1;
+                    renderPage();
                 } else {
+                    allRecords = [];
+                    resultsContainer.innerHTML = '';
+                    paginationContainer.innerHTML = '';
                     statusContainer.textContent = 'No records found matching your query.';
                     statusContainer.className = 'mt-4 text-gray-600';
                 }
@@ -217,15 +243,125 @@
                 console.error('Airtable API Error:', error);
             } finally {
                 // 7. Reset loading state
-                buttonText.classList.remove('hidden');
-                buttonSpinner.classList.add('hidden');
-                form.querySelector('button').disabled = false;
+                searchButton.disabled = false;
+                setShowAllDisabled(false);
             }
+        }
+
+        function setShowAllDisabled(disabled) {
+            if (disabled) {
+                showAllButton.setAttribute('aria-disabled', 'true');
+                showAllButton.style.pointerEvents = 'none';
+                showAllButton.style.opacity = '0.6';
+            } else {
+                showAllButton.removeAttribute('aria-disabled');
+                showAllButton.style.pointerEvents = '';
+                showAllButton.style.opacity = '';
+            }
+        }
+
+        function renderPage() {
+            const totalRecords = allRecords.length;
+            const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
+            currentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageRecords = allRecords.slice(start, start + PAGE_SIZE);
+
+            statusContainer.textContent = `Found ${totalRecords} record(s). Showing ${start + 1}-${start + pageRecords.length}.`;
+            statusContainer.className = 'mt-4 text-green-600 font-semibold';
+
+            renderResults(pageRecords);
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            paginationContainer.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const makeButton = (label, page, disabled, active) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = label;
+                btn.disabled = disabled;
+                btn.style.padding = '4px 10px';
+                btn.style.border = '1px solid #ccc';
+                btn.style.borderRadius = '4px';
+                btn.style.background = active ? '#2563eb' : '#fff';
+                btn.style.color = active ? '#fff' : '#333';
+                btn.style.cursor = disabled ? 'default' : 'pointer';
+                if (!disabled && !active) {
+                    btn.addEventListener('click', () => {
+                        currentPage = page;
+                        renderPage();
+                        resultsContainer.scrollTop = 0;
+                    });
+                }
+                return btn;
+            };
+
+            paginationContainer.appendChild(makeButton('Prev', currentPage - 1, currentPage === 1, false));
+
+            // Show a window of page numbers around the current page.
+            const windowSize = 2;
+            const startPage = Math.max(1, currentPage - windowSize);
+            const endPage = Math.min(totalPages, currentPage + windowSize);
+
+            if (startPage > 1) {
+                paginationContainer.appendChild(makeButton('1', 1, false, currentPage === 1));
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '…';
+                    paginationContainer.appendChild(ellipsis);
+                }
+            }
+
+            for (let page = startPage; page <= endPage; page++) {
+                paginationContainer.appendChild(makeButton(String(page), page, false, page === currentPage));
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '…';
+                    paginationContainer.appendChild(ellipsis);
+                }
+                paginationContainer.appendChild(makeButton(String(totalPages), totalPages, false, currentPage === totalPages));
+            }
+
+            paginationContainer.appendChild(makeButton('Next', currentPage + 1, currentPage === totalPages, false));
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            runSearch(false);
+        });
+
+        showAllButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            runSearch(true);
         });
 
         function renderResults(records) {
             resultsContainer.innerHTML = ''; // Clear previous results
+            let lastYear = null;
             records.forEach(record => {
+                if (groupByYear) {
+                    const year = getYear(record);
+                    if (year !== lastYear) {
+                        const yearHeader = document.createElement('h4');
+                        yearHeader.className = 'year-header';
+                        yearHeader.style.marginTop = '18px';
+                        yearHeader.style.marginBottom = '8px';
+                        yearHeader.style.fontWeight = 'bold';
+                        yearHeader.style.borderBottom = '1px solid #ddd';
+                        yearHeader.style.paddingBottom = '4px';
+                        yearHeader.textContent = year || 'Year Unknown';
+                        resultsContainer.appendChild(yearHeader);
+                        lastYear = year;
+                    }
+                }
+
                 const card = document.createElement('div');
                 card.className = 'result-card';
                 
