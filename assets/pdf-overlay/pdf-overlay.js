@@ -12,6 +12,12 @@
     return /\.pdf$/i.test(url.pathname);
   }
 
+  var MOBILE_UA_RE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i;
+
+  function isMobileDevice() {
+    return MOBILE_UA_RE.test(navigator.userAgent);
+  }
+
   var overlay, iframe, statusEl, titleEl, newTabLink;
   var lastFocused = null;
   var objectUrl = null;
@@ -62,6 +68,8 @@
   function open(href, label) {
     if (!overlay) build();
 
+    var mobile = isMobileDevice();
+
     lastFocused = document.activeElement;
     titleEl.textContent = label || '';
     newTabLink.href = href;
@@ -77,9 +85,19 @@
         return response.arrayBuffer();
       })
       .then(function (buffer) {
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
         var blob = new Blob([buffer], { type: 'application/pdf' });
-        objectUrl = URL.createObjectURL(blob);
+        var url = URL.createObjectURL(blob);
+
+        if (mobile) {
+          // Mobile browsers generally won't render a PDF blob inside a nested
+          // iframe (it falls back to a bare download instead), but they do
+          // render it fine on a top-level navigation, so hand off the tab.
+          window.location.href = url;
+          return;
+        }
+
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = url;
         iframe.src = objectUrl;
         iframe.style.display = 'block';
         statusEl.style.display = 'none';
