@@ -21,6 +21,7 @@
     <link rel="preload" href="https://fonts.googleapis.com/css?family=Jost:100,200,300,400,500,600,700,800,900,100i,200i,300i,400i,500i,600i,700i,800i,900i&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Jost:100,200,300,400,500,600,700,800,900,100i,200i,300i,400i,500i,600i,700i,800i,900i&display=swap"></noscript>
     <link rel="preload" as="style" href="assets/mobirise/css/mbr-additional.css"><link rel="stylesheet" href="assets/mobirise/css/mbr-additional.css" type="text/css">
+    <link rel="stylesheet" href="assets/pdf-overlay/pdf-overlay.css">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y7PDKLSVTY"></script>
@@ -422,7 +423,7 @@
                             <div>
                                 <span class="result-field" style="font-weight:bold;">${field}:</span> 
                                 <span class="result-value">
-                                    <a href="https://github.com/ARS-SWRC/RISE_website/blob/main/${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}?raw=true">
+                                    <a href="https://media.githubusercontent.com/media/ARS-SWRC/RISE_website/main/${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}">
                                         ${JSON.stringify(record.fields[field]).replace(/["\[\]]/g, '')}
                                     </a>
                                 </span>
@@ -483,6 +484,7 @@
 <script src="assets/mbr-tabs/mbr-tabs.js"></script>
 <script src="assets/dropdown/js/navbar-dropdown.js"></script>
 <script src="assets/theme/js/script.js"></script>
-  
+<script src="assets/pdf-overlay/pdf-overlay.js"></script>
+
 </body>
 </html>

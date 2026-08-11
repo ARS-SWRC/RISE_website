@@ -1,0 +1,108 @@
+.pdf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.75);
+}
+.pdf-overlay.pdf-overlay--active {
+  display: flex;
+}
+.pdf-overlay__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1000px;
+  height: 100%;
+  background: #fafafa;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+.pdf-overlay__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #232323;
+  flex: 0 0 auto;
+}
+.pdf-overlay__title {
+  margin-right: auto;
+  overflow: hidden;
+  color: #fafafa;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdf-overlay__link,
+.pdf-overlay__close {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #fafafa;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+}
+.pdf-overlay__link:hover,
+.pdf-overlay__link:focus,
+.pdf-overlay__close:hover,
+.pdf-overlay__close:focus {
+  color: #40b0bf;
+}
+.pdf-overlay__close {
+  font-size: 22px;
+  padding: 0 6px;
+}
+.pdf-overlay__body {
+  position: relative;
+  flex: 1 1 auto;
+  background: #525659;
+}
+.pdf-overlay__body iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.pdf-overlay__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  text-align: center;
+  color: #fafafa;
+  font-family: inherit;
+}
+.pdf-overlay__spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid rgba(250, 250, 250, 0.25);
+  border-top-color: #40b0bf;
+  animation: pdf-overlay-spin 0.8s linear infinite;
+}
+@keyframes pdf-overlay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.pdf-overlay__status a {
+  color: #40b0bf;
+}
+body.pdf-overlay-open {
+  overflow: hidden;
+}
